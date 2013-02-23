@@ -298,7 +298,13 @@ int main (int argc, char **argv){
 
     }
 
-    //Calculations Functions
+    /******************************************
+     * Calculates the ethernet mean
+     * of bytes in the entire stream
+     * @param count - Number of packets
+     * @param packetStream - array of packets
+     * @return the mean of ethernet in bytes
+     *****************************************/
     double calcEtherMean(int count, packet* packetStream){
     	int mean = 0;
     	int i;
