@@ -63,17 +63,109 @@ typedef struct{
 	double etherMean;
 	double etherStd;
 	double ipMean;
+	int etherMin;
+	int etherMax;
 	double ipHdrMean;
+	double ipHdrStd;
 	double ipStd;
+	int ipMin;
+	int ipMax;
+	int ipHdrMin;
+	int ipHdrMax;
 	double tcpMean;
 	double tcpHdrMean;
 	double tcpStd;
+	double tcpHdrStd;
+	int tcpMin;
+	int tcpMax;
+	int tcpHdrMin;
+	int tcpHdrMax;
+	double q1EtherMean;
+	double q2EtherMean;
+	double q3EtherMean;
+	double q4EtherMean;
+	double q1EtherStd;
+	double q2EtherStd;
+	double q3EtherStd;
+	double q4EtherStd;
+	int q1EtherMin;
+	int q1EtherMax;
+	int q2EtherMin;
+	int q2EtherMax;
+	int q3EtherMin;
+	int q3EtherMax;
+	int q4EtherMin;
+	int q4EtherMax;
+	double q1IpMean;
+	double q2IpMean;
+	double q3IpMean;
+	double q4IpMean;
+	double q1IpStd;
+	double q2IpStd;
+	double q3IpStd;
+	double q4IpStd;
+	int q1IpMin;
+	int q1IpMax;
+	int q2IpMin;
+	int q2IpMax;
+	int q3IpMin;
+	int q3IpMax;
+	int q4IpMin;
+	int q4IpMax;
+	double q1IpHdrMean;
+	double q2IpHdrMean;
+	double q3IpHdrMean;
+	double q4IpHdrMean;
+	double q1IpHdrStd;
+	double q2IpHdrStd;
+	double q3IpHdrStd;
+	double q4IpHdrStd;
+	int q1IpHdrMin;
+	int q1IpHdrMax;
+	int q2IpHdrMin;
+	int q2IpHdrMax;
+	int q3IpHdrMin;
+	int q3IpHdrMax;
+	int q4IpHdrMin;
+	int q4IpHdrMax;
+	double q1TcpMean;
+	double q2TcpMean;
+	double q3TcpMean;
+	double q4TcpMean;
+	double q1TcpStd;
+	double q2TcpStd;
+	double q3TcpStd;
+	double q4TcpStd;
+	int q1TcpMin;
+	int q1TcpMax;
+	int q2TcpMin;
+	int q2TcpMax;
+	int q3TcpMin;
+	int q3TcpMax;
+	int q4TcpMin;
+	int q4TcpMax;
+	double q1TcpHdrMean;
+	double q2TcpHdrMean;
+	double q3TcpHdrMean;
+	double q4TcpHdrMean;
+	double q1TcpHdrStd;
+	double q2TcpHdrStd;
+	double q3TcpHdrStd;
+	double q4TcpHdrStd;
+	int q1TcpHdrMin;
+	int q1TcpHdrMax;
+	int q2TcpHdrMin;
+	int q2TcpHdrMax;
+	int q3TcpHdrMin;
+	int q3TcpHdrMax;
+	int q4TcpHdrMin;
+	int q4TcpHdrMax;
 }stream;
 
 /***********************************
  * Prototypes
  **********************************/
-void displayOutput(int count, packet* packetStream, stream stream);
+void displayOutput(int count, int* quartile, packet* packetStream, stream stream);
 void f_argparser(int argc, char **argv, argparse* arg_vars);
 int countPackets(pcap_t* handle);
 void setPackets(pcap_t* handle, packet* packetStream, argparse arguments);
@@ -85,6 +177,17 @@ double calcTcpMean(packet* packetStream, int start, int finish);
 double calcIpMean(packet* packetStream, int start, int finish);
 double calcTcpHdrMean(packet* packetStream, int start, int finish);
 double calcIpStd(packet* packetStream, int start, int finish);
+double calcTcpStd(packet* packetStream, int start, int finish);
+void quartileCalc(int count, int* quartile);
+
+double calcIpHdrStd(packet* packetStream, int start, int finish);
+double calcTcpHdrStd(packet* packetStream, int start, int finish);
+
+void packetMinMaxEther(packet* packetStream, int* minMax, int start, int finish);
+void packetMinMaxIp(packet* packetStream, int* minMax, int start, int finish);
+void packetMinMaxIpHdr(packet* packetStream, int* minMax, int start, int finish);
+void packetMinMaxTcp(packet* packetStream, int* minMax, int start, int finish);
+void packetMinMaxTcpHdr(packet* packetStream, int* minMax, int start, int finish);
 
 
 /*********************************************
@@ -127,6 +230,9 @@ int main (int argc, char **argv){
          *********************************/
         //Grabbing total count of packets
         int count = countPackets(handle);
+        int quartile[4];
+        quartileCalc(count, quartile);
+        int temp[2] = {0,0};
         //Allocating array of packets of count #
         packet packetStream[count];
         //Filling out packet array
@@ -137,12 +243,143 @@ int main (int argc, char **argv){
         memset(&stream, 0, sizeof(stream));
         //Calculations for Stream
         stream.etherMean = calcEtherMean(packetStream, 0, count);
-        stream.ipMean = calcIpMean(packetStream, 0, count);
-        stream.tcpMean = calcTcpMean(packetStream, 0, count);
-        stream.ipHdrMean = calcIpHdrMean(packetStream, 0, count);
-        stream.tcpHdrMean = calcTcpHdrMean(packetStream, 0, count);
         stream.etherStd = calcEtherStd(packetStream, 0, count);
+        packetMinMaxEther(packetStream, temp, 0, count);
+        stream.etherMin = temp[0];
+        stream.etherMax = temp[1];
+        //Ethernet Size Quartile Calcs
+        stream.q1EtherMean = calcEtherMean(packetStream, 0, quartile[0]);
+        packetMinMaxEther(packetStream, temp, 0, quartile[0]);
+        stream.q1EtherMin = temp[0];
+        stream.q1EtherMax = temp[1];
+        stream.q2EtherMean = calcEtherMean(packetStream, quartile[0], quartile[1]);
+        packetMinMaxEther(packetStream, temp, quartile[0], quartile[1]);
+        stream.q2EtherMin = temp[0];
+        stream.q2EtherMax = temp[1];
+        stream.q3EtherMean = calcEtherMean(packetStream, quartile[1], quartile[2]);
+        packetMinMaxEther(packetStream, temp, quartile[2], quartile[3]);
+        stream.q3EtherMin = temp[0];
+        stream.q3EtherMax = temp[1];
+        stream.q4EtherMean = calcEtherMean(packetStream, quartile[2], quartile[3]);
+        packetMinMaxEther(packetStream, temp, quartile[2], quartile[3]);
+        stream.q4EtherMin = temp[0];
+        stream.q4EtherMax = temp[1];
+        //Ethernet Standard Deviation Quartile Calcs
+        stream.q1EtherStd = calcEtherStd(packetStream, 0, quartile[0]);
+        stream.q2EtherStd = calcEtherStd(packetStream, quartile[0], quartile[1]);
+        stream.q3EtherStd = calcEtherStd(packetStream, quartile[1], quartile[2]);
+        stream.q4EtherStd = calcEtherStd(packetStream, quartile[2], quartile[3]);
+
+        //IP Size Calc
+        stream.ipMean = calcIpMean(packetStream, 0, count);
         stream.ipStd = calcIpStd(packetStream, 0, count);
+        stream.ipHdrMean = calcIpHdrMean(packetStream, 0, count);
+        stream.ipHdrStd = calcIpHdrStd(packetStream, 0, count);
+        packetMinMaxIp(packetStream, temp, 0, count);
+        stream.ipMin = temp[0];
+        stream.ipMax = temp[1];
+        packetMinMaxIpHdr(packetStream, temp, 0, count);
+        stream.ipHdrMin = temp[0];
+        stream.ipHdrMax = temp[1];
+        //IP Quartile Mean Calc
+        stream.q1IpMean = calcIpMean(packetStream, 0, quartile[0]);
+        packetMinMaxIp(packetStream, temp, 0, count);
+        stream.q1IpMin = temp[0];
+        stream.q1IpMax = temp[1];
+        stream.q2IpMean = calcIpMean(packetStream, quartile[0], quartile[1]);
+        packetMinMaxIp(packetStream, temp, 0, count);
+        stream.q2IpMin = temp[0];
+        stream.q2IpMax = temp[1];
+        stream.q3IpMean = calcIpMean(packetStream, quartile[1], quartile[2]);
+        packetMinMaxIp(packetStream, temp, 0, count);
+        stream.q3IpMin = temp[0];
+        stream.q3IpMax = temp[1];
+        stream.q4IpMean = calcIpMean(packetStream, quartile[2], quartile[3]);
+        packetMinMaxIp(packetStream, temp, 0, count);
+        stream.q4IpMin = temp[0];
+        stream.q4IpMax = temp[1];
+        //IP Quartile Header Calcs
+        stream.q1IpHdrMean = calcIpHdrMean(packetStream, 0, quartile[0]);
+        packetMinMaxIpHdr(packetStream, temp, 0, count);
+        stream.q1IpHdrMin = temp[0];
+        stream.q1IpHdrMax = temp[1];
+        stream.q2IpHdrMean = calcIpHdrMean(packetStream, quartile[0], quartile[1]);
+        packetMinMaxIpHdr(packetStream, temp, 0, count);
+        stream.q2IpHdrMin = temp[0];
+        stream.q2IpHdrMax = temp[1];
+        stream.q3IpHdrMean = calcIpHdrMean(packetStream, quartile[1], quartile[2]);
+        packetMinMaxIpHdr(packetStream, temp, 0, count);
+        stream.q3IpHdrMin = temp[0];
+        stream.q3IpHdrMax = temp[1];
+        stream.q4IpHdrMean = calcIpHdrMean(packetStream, quartile[2], quartile[3]);
+        packetMinMaxIpHdr(packetStream, temp, 0, count);
+        stream.q4IpHdrMin = temp[0];
+        stream.q4IpHdrMax = temp[1];
+        //IP Quartile Standard Deviation Calc
+        stream.q1IpStd = calcIpStd(packetStream, 0, quartile[0]);
+        stream.q2IpStd = calcIpStd(packetStream, quartile[0], quartile[1]);
+        stream.q3IpStd = calcIpStd(packetStream, quartile[1], quartile[2]);
+        stream.q4IpStd = calcIpStd(packetStream, quartile[2], quartile[3]);
+        stream.q1IpHdrStd = calcIpHdrStd(packetStream, 0, quartile[0]);
+        stream.q2IpHdrStd = calcIpHdrStd(packetStream, quartile[0], quartile[1]);
+        stream.q3IpHdrStd = calcIpHdrStd(packetStream, quartile[1], quartile[2]);
+        stream.q4IpHdrStd = calcIpHdrStd(packetStream, quartile[2], quartile[3]);
+
+        //TCP Stream Mean/STD Calcs
+        stream.tcpMean = calcTcpMean(packetStream, 0, count);
+        stream.tcpHdrMean = calcTcpHdrMean(packetStream, 0, count);
+        stream.tcpStd = calcTcpStd(packetStream, 0, count);
+        stream.tcpHdrStd = calcTcpHdrStd(packetStream, 0, count);
+        packetMinMaxTcp(packetStream, temp, 0, count);
+        stream.tcpMin = temp[0];
+        stream.tcpMax = temp[1];
+        packetMinMaxTcpHdr(packetStream, temp, 0, count);
+        stream.tcpHdrMin = temp[0];
+        stream.tcpHdrMax = temp[1];
+        //TCP Quartile Mean Calcs
+        stream.q1TcpMean = calcTcpMean(packetStream, 0, quartile[0]);
+        //stream.q1TcpHdrStd = calcTcpHdrStd(packetStream, 0, quartile[0]);
+        packetMinMaxTcp(packetStream, temp, 0, count);
+        stream.q1TcpMin = temp[0];
+        stream.q1TcpMax = temp[1];
+        stream.q2TcpMean = calcTcpMean(packetStream, quartile[0], quartile[1]);
+        packetMinMaxTcp(packetStream, temp, 0, count);
+        stream.q2TcpMin = temp[0];
+        stream.q2TcpMax = temp[1];
+        stream.q3TcpMean = calcTcpMean(packetStream, quartile[1], quartile[2]);
+        packetMinMaxTcp(packetStream, temp, 0, count);
+        stream.q3TcpMin = temp[0];
+        stream.q3TcpMax = temp[1];
+        stream.q4TcpMean = calcTcpMean(packetStream, quartile[2], quartile[3]);
+        packetMinMaxTcp(packetStream, temp, 0, count);
+        stream.q4TcpMin = temp[0];
+        stream.q4TcpMax = temp[1];
+        //TCP Quartile Header Calcs
+        stream.q1TcpHdrMean = calcTcpHdrMean(packetStream, 0, quartile[0]);
+        packetMinMaxTcpHdr(packetStream, temp, 0, count);
+        stream.q1TcpHdrMin = temp[0];
+        stream.q1TcpHdrMax = temp[1];
+        stream.q2TcpHdrMean = calcTcpHdrMean(packetStream, quartile[0], quartile[1]);
+        packetMinMaxTcpHdr(packetStream, temp, 0, count);
+        stream.q2TcpHdrMin = temp[0];
+        stream.q2TcpHdrMax = temp[1];
+        stream.q3TcpHdrMean = calcTcpHdrMean(packetStream, quartile[1], quartile[2]);
+        packetMinMaxTcpHdr(packetStream, temp, 0, count);
+        stream.q3TcpHdrMin = temp[0];
+        stream.q3TcpHdrMax = temp[1];
+        stream.q4TcpHdrMean = calcTcpHdrMean(packetStream, quartile[2], quartile[3]);
+        packetMinMaxTcpHdr(packetStream, temp, 0, count);
+        stream.q4TcpHdrMin = temp[0];
+        stream.q4TcpHdrMax = temp[1];
+        //TCP Quartile STD Calcs
+        stream.q1TcpStd = calcTcpStd(packetStream, 0, quartile[0]);
+        stream.q2TcpStd = calcTcpStd(packetStream, quartile[0], quartile[1]);
+        stream.q3TcpStd = calcTcpStd(packetStream, quartile[1], quartile[2]);
+        stream.q4TcpStd = calcTcpStd(packetStream, quartile[2], quartile[3]);
+        stream.q1TcpHdrStd = calcTcpHdrStd(packetStream, 0, quartile[0]);
+        stream.q2TcpHdrStd = calcTcpHdrStd(packetStream, quartile[0], quartile[1]);
+        stream.q3TcpHdrStd = calcTcpHdrStd(packetStream, quartile[1], quartile[2]);
+        stream.q4TcpHdrStd = calcTcpHdrStd(packetStream, quartile[2], quartile[3]);
 
 
 
@@ -150,7 +387,7 @@ int main (int argc, char **argv){
         /*****************
          * Printing Output
          ****************/
-        displayOutput(count, packetStream, stream);
+        displayOutput(count, quartile, packetStream, stream);
 
 
         return 0;
@@ -315,6 +552,79 @@ int main (int argc, char **argv){
     }
 
     //Calculations Functions
+
+    void quartileCalc(int count, int* quartile){
+    	int x = count/2;
+    	int y = count - x;
+    	int a = x/2;
+    	int b = x-a;
+    	int c = y/2;
+    	quartile[0] = a;
+    	quartile[1] = a + b;
+    	quartile[2] = quartile[1] + c;
+    	quartile[3] = count;
+    }
+
+    void packetMinMaxEther(packet* packetStream, int* minMax, int start, int finish){
+    	minMax[0] = packetStream[start].etherSize;
+    	minMax[1] = packetStream[start].etherSize;
+    	int i;
+    	for(i = start; i < finish; i++){
+    		if(packetStream[i].etherSize < minMax[0])
+    			minMax[0] = packetStream[i].etherSize;
+    		if(packetStream[i].etherSize > minMax[1])
+    			minMax[1] = packetStream[i].etherSize;
+    	}
+    }
+
+    void packetMinMaxIp(packet* packetStream, int* minMax, int start, int finish){
+    	minMax[0] = packetStream[start].ipSize;
+    	minMax[1] = packetStream[start].ipSize;
+    	int i;
+    	for(i = start; i < finish; i++){
+    		if(packetStream[i].etherSize < minMax[0])
+    			minMax[0] = packetStream[i].ipSize;
+    		if(packetStream[i].etherSize > minMax[1])
+    			minMax[1] = packetStream[i].ipSize;
+    	}
+    }
+
+    void packetMinMaxIpHdr(packet* packetStream, int* minMax, int start, int finish){
+    	minMax[0] = packetStream[start].ipHdrSize;
+    	minMax[1] = packetStream[start].ipHdrSize;
+    	int i;
+    	for(i = start; i < finish; i++){
+    		if(packetStream[i].ipHdrSize < minMax[0])
+    			minMax[0] = packetStream[i].ipHdrSize;
+    		if(packetStream[i].ipHdrSize > minMax[1])
+    			minMax[1] = packetStream[i].ipHdrSize;
+    	}
+    }
+
+    void packetMinMaxTcp(packet* packetStream, int* minMax, int start, int finish){
+    	minMax[0] = packetStream[start].tcpSize;
+    	minMax[1] = packetStream[start].tcpSize;
+    	int i;
+    	for(i = start; i < finish; i++){
+    		if(packetStream[i].etherSize < minMax[0])
+    			minMax[0] = packetStream[i].tcpSize;
+    		if(packetStream[i].etherSize > minMax[1])
+    			minMax[1] = packetStream[i].tcpSize;
+    	}
+    }
+
+    void packetMinMaxTcpHdr(packet* packetStream, int* minMax, int start, int finish){
+    	minMax[0] = packetStream[start].tcpHdrSize;
+    	minMax[1] = packetStream[start].tcpHdrSize;
+    	int i;
+    	for(i = start; i < finish; i++){
+    		if(packetStream[i].tcpHdrSize < minMax[0])
+    			minMax[0] = packetStream[i].tcpHdrSize;
+    		if(packetStream[i].tcpHdrSize > minMax[1])
+    			minMax[1] = packetStream[i].tcpHdrSize;
+    	}
+    }
+
     /********************************
      * Calculating Ethernet Mean
      * @param packetStream - Packet Array
@@ -374,6 +684,22 @@ int main (int argc, char **argv){
     	return std;
     }
 
+    double calcIpHdrStd(packet* packetStream, int start, int finish){
+    	double mean = 0;
+    	int i;
+    	double std = 0;
+    	for(i = start;i < finish; i++){
+    		mean += packetStream[i].ipHdrSize;
+    	}
+    	mean = mean / (finish - start);
+    	for(i=0;i <finish; i++){
+    		std += pow((packetStream[i].ipHdrSize - mean),2);
+    	}
+    	std = std / mean;
+    	std = sqrt(std);
+    	return std;
+    }
+
     double calcIpHdrMean(packet* packetStream, int start, int finish){
      	double mean = 0;
      	int i;
@@ -404,25 +730,158 @@ int main (int argc, char **argv){
      	return mean;
      }
 
+    double calcTcpStd(packet* packetStream, int start, int finish){
+    	double mean = 0;
+    	int i;
+    	double std = 0;
+    	for(i = start;i < finish; i++){
+    		mean += packetStream[i].tcpSize;
+    	}
+    	mean = mean / (finish - start);
+    	for(i=0;i <finish; i++){
+    		std += pow((packetStream[i].tcpSize - mean),2);
+    	}
+    	std = std / mean;
+    	std = sqrt(std);
+    	return std;
+    }
+
+    double calcTcpHdrStd(packet* packetStream, int start, int finish){
+    	double mean = 0;
+    	int i;
+    	double std = 0;
+    	for(i = start;i < finish; i++){
+    		mean += packetStream[i].tcpHdrSize;
+    	}
+    	mean = mean / (finish - start);
+    	for(i=0;i <finish; i++){
+    		std += pow((packetStream[i].tcpHdrSize - mean),2);
+    	}
+    	std = std / mean;
+    	std = sqrt(std);
+    	return std;
+    }
+
 
 
     /************************************************
      * Displays output at the end of the program
      * @param count - Number of Packets in the stream
      ************************************************/
-    void displayOutput(int count, packet* packetStream, stream stream){
+    void displayOutput(int count, int* quartile, packet* packetStream, stream stream){
     	printf("*************************\n");
     	printf("\tOutput:\n");
     	printf("*************************\n");
     	printf("Total Packet Count: \t[%i]\n", count);
+    	printf("Quartile Breakdown:\n");
+    	printf("Q1: %d, Q2: %d, Q3: %d, Q4: %d\n", quartile[0], quartile[1], quartile[2], quartile[3]);
     	printf("*************************\n");
     	printf("Stream Discriminators:\n");
     	printf("\tEthernet Mean: \t%.2f\n", stream.etherMean);
     	printf("\tEthernet STD: \t%.2f\n", stream.etherStd);
+    	printf("\tEthernet Min: \t%i\n", stream.etherMin);
+    	printf("\tEthernet Max: \t%i\n", stream.etherMax);
     	printf("\tIP Mean: \t%.2f\n", stream.ipMean);
     	printf("\tIP STD: \t%.2f\n", stream.ipStd);
+    	printf("\tIP Min: \t%i\n", stream.ipMin);
+    	printf("\tIP Max: \t%i\n", stream.ipMax);
     	printf("\tIP Header Mean: %.2f\n", stream.ipHdrMean);
+    	printf("\tIP Header STD: \t%.2f\n", stream.ipHdrStd);
+    	printf("\tIP Header Min: \t%i\n", stream.ipHdrMin);
+    	printf("\tIP Header Max: \t%i\n", stream.ipHdrMax);
     	printf("\tTCP Mean: \t%.2f\n", stream.tcpMean);
-    	printf("\tTCP Header Mean: %.2f\n", stream.tcpHdrMean);
+    	printf("\tTCP STD: \t%.2f\n", stream.tcpStd);
+    	printf("\tTCP Min: \t%i\n", stream.tcpMin);
+    	printf("\tTCP Max: \t%i\n", stream.tcpMax);
+    	printf("\tTCP Header Mean:%.2f\n", stream.tcpHdrMean);
+    	printf("\tTCP Header STD: %.2f\n", stream.tcpHdrStd);
+    	printf("\tTCP Header Min: %i\n", stream.tcpHdrMin);
+    	printf("\tTCP Header Max: %i\n", stream.tcpHdrMax);
+    	printf("*************************\n");
+    	printf("Quartile Calculations:\n");
+    	printf("Q1:\n");
+    	printf("\tEthernet Mean: \t%.2f\n", stream.q1EtherMean);
+    	printf("\tEthernet STD: \t%.2f\n", stream.q1EtherStd);
+    	printf("\tEthernet Min: \t%i\n", stream.q1EtherMin);
+    	printf("\tEthernet Max: \t%i\n", stream.q1EtherMax);
+    	printf("\tIP Mean: \t%.2f\n", stream.q1IpMean);
+    	printf("\tIP STD: \t%.2f\n", stream.q1IpStd);
+    	printf("\tIP Min: \t%i\n", stream.q1IpMin);
+    	printf("\tIP Max: \t%i\n", stream.q1IpMax);
+    	printf("\tIP Header Mean: %.2f\n", stream.q1IpHdrMean);
+    	printf("\tIP Header STD:  %.2f\n", stream.q1IpHdrStd);
+    	printf("\tIP Min Header:  %.2f\n", stream.q1IpHdrMin);
+    	printf("\tIP Max Header:  %.2f\n", stream.q1IpHdrMax);
+    	printf("\tTCP Mean: \t%.2f\n", stream.q1TcpMean);
+    	printf("\tTCP STD: \t%.2f\n", stream.q1TcpStd);
+    	printf("\tTCP Min: \t%i\n", stream.q1TcpMin);
+    	printf("\tTCP Max: \t%i\n", stream.q1TcpMax);
+    	printf("\tTCP Header Mean:%.2f\n", stream.q1TcpHdrMean);
+    	printf("\tTCP Header STD: %.2f\n", stream.q1TcpHdrStd);
+    	printf("\tTCP Min Header: %i\n", stream.q1TcpHdrMin);
+    	printf("\tTCP Max Header: %i\n", stream.q1TcpHdrMax);
+    	printf("Q2:\n");
+    	printf("\tEthernet Mean: \t%.2f\n", stream.q2EtherMean);
+    	printf("\tEthernet STD: \t%.2f\n", stream.q2EtherStd);
+    	printf("\tEthernet Min: \t%i\n", stream.q2EtherMin);
+    	printf("\tEthernet Max: \t%i\n", stream.q2EtherMax);
+    	printf("\tIP Mean: \t%.2f\n", stream.q2IpMean);
+    	printf("\tIP STD: \t%.2f\n", stream.q2IpStd);
+    	printf("\tIP Min: \t%i\n", stream.q2IpMin);
+    	printf("\tIP Max: \t%i\n", stream.q2IpMax);
+    	printf("\tIP Header Mean: %.2f\n", stream.q2IpHdrMean);
+    	printf("\tIP Header STD:  %.2f\n", stream.q2IpHdrStd);
+    	printf("\tIP Min Header:  %i\n", stream.q2IpHdrMin);
+    	printf("\tIP Max Header:  %i\n", stream.q2IpHdrMax);
+    	printf("\tTCP Mean: \t%.2f\n", stream.q2TcpMean);
+    	printf("\tTCP STD: \t%.2f\n", stream.q2TcpStd);
+    	printf("\tTCP Min: \t%i\n", stream.q2TcpMin);
+    	printf("\tTCP Max: \t%i\n", stream.q2TcpMax);
+    	printf("\tTCP Header Mean:%.2f\n", stream.q2TcpHdrMean);
+    	printf("\tTCP Header STD: %.2f\n", stream.q2TcpHdrStd);
+    	printf("\tTCP Min Header: %i\n", stream.q2TcpHdrMin);
+    	printf("\tTCP Max Header: %i\n", stream.q2TcpHdrMax);
+		printf("Q3:\n");
+    	printf("\tEthernet Mean: \t%.2f\n", stream.q3EtherMean);
+    	printf("\tEthernet STD: \t%.2f\n", stream.q3EtherStd);
+    	printf("\tEthernet Min: \t%i\n", stream.q3EtherMin);
+    	printf("\tEthernet Max: \t%i\n", stream.q3EtherMax);
+    	printf("\tIP Mean: \t%.2f\n", stream.q3IpMean);
+    	printf("\tIP STD: \t%.2f\n", stream.q3IpStd);
+    	printf("\tIP Min: \t%i\n", stream.q3IpMin);
+    	printf("\tIP Max: \t%i\n", stream.q3IpMax);
+    	printf("\tIP Header Mean: %.2f\n", stream.q3IpHdrMean);
+    	printf("\tIP Header STD:  %.2f\n", stream.q3IpHdrStd);
+    	printf("\tIP Min Header:  %i\n", stream.q3IpHdrMin);
+    	printf("\tIP Max Header:  %i\n", stream.q3IpHdrMax);
+    	printf("\tTCP Mean: \t%.2f\n", stream.q3TcpMean);
+    	printf("\tTCP STD: \t%.2f\n", stream.q3TcpStd);
+    	printf("\tTCP Min: \t%i\n", stream.q3TcpMin);
+    	printf("\tTCP Max: \t%i\n", stream.q3TcpMax);
+    	printf("\tTCP Header Mean:%.2f\n", stream.q3TcpHdrMean);
+    	printf("\tTCP Header STD: %.2f\n", stream.q3TcpHdrStd);
+    	printf("\tTCP Min Header: %i\n", stream.q3TcpHdrMin);
+    	printf("\tTCP Max Header: %i\n", stream.q3TcpHdrMax);
+    	printf("Q4:\n");
+    	printf("\tEthernet Mean: \t%.2f\n", stream.q4EtherMean);
+    	printf("\tEthernet STD: \t%.2f\n", stream.q4EtherStd);
+    	printf("\tEthernet Min: \t%i\n", stream.q4EtherMin);
+    	printf("\tEthernet Max: \t%i\n", stream.q4EtherMax);
+    	printf("\tIP Mean: \t%.2f\n", stream.q4IpMean);
+    	printf("\tIP STD: \t%.2f\n", stream.q4IpStd);
+    	printf("\tIP Min: \t%i\n", stream.q4IpMin);
+    	printf("\tIP Max: \t%i\n", stream.q4IpMax);
+    	printf("\tIP Header Mean: %.2f\n", stream.q4IpHdrMean);
+    	printf("\tIP Header STD:  %.2f\n", stream.q4IpHdrStd);
+    	printf("\tIP Min Header:  %i\n", stream.q4IpHdrMin);
+    	printf("\tIP Max Header:  %i\n", stream.q4IpHdrMax);
+    	printf("\tTCP Mean: \t%.2f\n", stream.q4TcpMean);
+    	printf("\tTCP STD: \t%.2f\n", stream.q4TcpStd);
+    	printf("\tTCP Min: \t%i\n", stream.q4TcpMin);
+    	printf("\tTCP Max: \t%i\n", stream.q4TcpMax);
+    	printf("\tTCP Header Mean:%.2f\n", stream.q4TcpHdrMean);
+    	printf("\tTCP Header STD: %.2f\n", stream.q4TcpHdrStd);
+    	printf("\tTCP Min Header: %i\n", stream.q4TcpHdrMin);
+    	printf("\tTCP Max Header: %i\n", stream.q4TcpHdrMax);
     	printf("\n\n\n");
     }
