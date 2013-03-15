@@ -191,7 +191,11 @@ void packetMinMaxTcp(packet* packetStream, int* minMax, int start, int finish);
 void packetMinMaxTcpHdr(packet* packetStream, int* minMax, int start, int finish);
 
 void discriminatorCalc(int count, int* quartile, packet* packetStream, stream* stream);
-void sortPacketsEther(int count, packet* packetEther);
+void sortPacketsEther(int count, packet* packetStream);
+void sortPacketsIp(int count, packet* packetStream);
+void sortPacketsIpHdr(int count, packet* packetStream);
+void sortPacketsTcp(int count, packet* packetStream);
+void sortPacketsTcpHdr(int count, packet* packetStream);
 void verbosePacketOutput(int count, packet* packetStream);
 void mysqlConnector(MYSQL mysql);
 
@@ -245,21 +249,42 @@ int main (int argc, char **argv){
         setPackets(handle, packetStream, arguments);
 
         //Struct used to hold stream information
-        stream stream, streamEther;
+        stream stream, streamEther, streamIp, streamIpHdr, streamTcp, streamTcpHdr;
         memset(&stream, 0, sizeof(stream));
         memset(&streamEther, 0, sizeof(stream));
+        memset(&streamIp, 0, sizeof(stream));
+        memset(&streamIpHdr, 0, sizeof(stream));
+        memset(&streamTcp, 0, sizeof(stream));
+        memset(&streamTcpHdr, 0, sizeof(stream));
         //Calculations for Stream
         discriminatorCalc(count, quartile, packetStream, &stream);
 
         //Sorting Stream
+        //Sorting by Ether Size
         packet packetEther[count];
         memcpy(&packetEther, &packetStream, sizeof(packetEther));
         sortPacketsEther(count, packetEther);
-        if(arguments.verbosemode == 1){
-        	verbosePacketOutput(count, packetStream);
-        	verbosePacketOutput(count, packetEther);
-        }
         discriminatorCalc(count, quartile, packetEther, &streamEther);
+        //Sorting by IP Size
+        packet packetIp[count];
+        memcpy(&packetIp, &packetStream, sizeof(packetIp));
+        sortPacketsEther(count, packetIp);
+        discriminatorCalc(count, quartile, packetIp, &streamIp);
+        //Sorting by IP Header Size
+        packet packetIpHdr[count];
+        memcpy(&packetIpHdr, &packetStream, sizeof(packetIpHdr));
+        sortPacketsIpHdr(count, packetIpHdr);
+        discriminatorCalc(count, quartile, packetIpHdr, &streamIpHdr);
+        //Sorting by TCP Size
+        packet packetTcp[count];
+        memcpy(&packetTcp, &packetStream, sizeof(packetTcp));
+        sortPacketsTcp(count, packetTcp);
+        discriminatorCalc(count, quartile, packetTcp, &streamTcp);
+        //Sorting by TCP Header Size
+        packet packetTcpHdr[count];
+        memcpy(&packetTcpHdr, &packetStream, sizeof(packetTcpHdr));
+        sortPacketsTcpHdr(count, packetTcpHdr);
+        discriminatorCalc(count, quartile, packetTcpHdr, &streamTcpHdr);
         /***************
          * Mysql Section
          ***************/
@@ -272,8 +297,32 @@ int main (int argc, char **argv){
         /*****************
          * Printing Output
          ****************/
+        if(arguments.verbosemode == 1){
+        	printf("\n***Sorted by Order Received***\n");
+        	verbosePacketOutput(count, packetStream);
+        	printf("\n***Sorted by Ethernet Size***\n");
+        	verbosePacketOutput(count, packetEther);
+        	printf("\n***Sorted by IP Size***\n");
+        	verbosePacketOutput(count, packetIp);
+        	printf("\n***Sorted by IP Header Size***\n");
+        	verbosePacketOutput(count, packetIpHdr);
+        	printf("\n***Sorted by TCP Size***\n");
+        	verbosePacketOutput(count, packetTcp);
+        	printf("\n***Sorted by TCP Header Size***\n");
+        	verbosePacketOutput(count, packetTcpHdr);
+        }
+        printf("\n****Summary Order Received****\n");
         displayOutput(count, quartile, packetStream, stream);
+        printf("\n****Summary Ether Size****\n");
         displayOutput(count, quartile, packetEther, streamEther);
+        printf("\n****Summary IP Size****\n");
+        displayOutput(count, quartile, packetIp, streamIp);
+        printf("\n****Summary IP Header Size****\n");
+        displayOutput(count, quartile, packetIp, streamIpHdr);
+        printf("\n****Summary TCP Size****\n");
+        displayOutput(count, quartile, packetIp, streamTcp);
+        printf("\n****Summary TCP Header Size****\n");
+        displayOutput(count, quartile, packetIp, streamTcpHdr);
 
 
         return 0;
@@ -536,12 +585,12 @@ int main (int argc, char **argv){
     		mean += packetStream[i].etherSize;
     	}
     	mean = mean / (finish - start);
-    	for(i=0;i <finish; i++){
+    	for(i=start;i <finish; i++){
     		std += pow((packetStream[i].etherSize - mean),2);
     	}
     	if(mean == 0)
     		return 0;
-    	std = std / mean;
+    	std = std / (finish - start);
     	std = sqrt(std);
     	return std;
     }
@@ -564,12 +613,12 @@ int main (int argc, char **argv){
     		mean += packetStream[i].ipSize;
     	}
     	mean = mean / (finish - start);
-    	for(i=0;i <finish; i++){
+    	for(i=start;i <finish; i++){
     		std += pow((packetStream[i].ipSize - mean),2);
     	}
     	if(mean == 0)
     		return 0;
-    	std = std / mean;
+    	std = std / (finish - start);
     	std = sqrt(std);
     	return std;
     }
@@ -582,12 +631,12 @@ int main (int argc, char **argv){
     		mean += packetStream[i].ipHdrSize;
     	}
     	mean = mean / (finish - start);
-    	for(i=0;i <finish; i++){
+    	for(i=start;i <finish; i++){
     		std += pow((packetStream[i].ipHdrSize - mean),2);
     	}
     	if(mean == 0)
     		return 0;
-    	std = std / mean;
+    	std = std / (finish - start);
     	std = sqrt(std);
     	return std;
     }
@@ -630,12 +679,12 @@ int main (int argc, char **argv){
     		mean += packetStream[i].tcpSize;
     	}
     	mean = mean / (finish - start);
-    	for(i=0;i <finish; i++){
+    	for(i=start;i <finish; i++){
     		std += pow((packetStream[i].tcpSize - mean),2);
     	}
     	if(mean == 0)
     		return 0;
-    	std = std / mean;
+    	std = std / (finish - start);
     	std = sqrt(std);
     	return std;
     }
@@ -648,12 +697,12 @@ int main (int argc, char **argv){
     		mean += packetStream[i].tcpHdrSize;
     	}
     	mean = mean / (finish - start);
-    	for(i=0;i <finish; i++){
+    	for(i=start;i <finish; i++){
     		std += pow((packetStream[i].tcpHdrSize - mean),2);
     	}
     	if(mean == 0)
     		return 0;
-    	std = std / mean;
+    	std = std / (finish - start);
     	std = sqrt(std);
     	return std;
     }
@@ -679,7 +728,7 @@ int main (int argc, char **argv){
 		stream->q2EtherMax = temp[1];
 		memset(&temp, 0, sizeof(temp));
 		stream->q3EtherMean = calcEtherMean(packetStream, quartile[1], quartile[2]);
-		packetMinMaxEther(packetStream, temp, quartile[2], quartile[3]);
+		packetMinMaxEther(packetStream, temp, quartile[1], quartile[2]);
 		stream->q3EtherMin = temp[0];
 		stream->q3EtherMax = temp[1];
 		stream->q4EtherMean = calcEtherMean(packetStream, quartile[2], quartile[3]);
@@ -950,7 +999,7 @@ int main (int argc, char **argv){
     void verbosePacketOutput(int count, packet* packetStream){
     	printf("\n\n*****VERBOSE OUTPUT******\n\n");
     	int i;
-    	for(i = 0; i<(count-1); i++){
+    	for(i = 0; i<(count); i++){
 			printf("\n\nPacket# [%d], with length of [%d]\n", i + 1, packetStream[i].etherWire);
 			printf("Ethernet Information-\n");
 			printf("\tSize of Ethernet Payload: %d\n", packetStream[i].etherSize);
@@ -972,15 +1021,71 @@ int main (int argc, char **argv){
      * Sorting Functions
      **********************/
 
-    void sortPacketsEther(int count, packet* packetEther){
+    void sortPacketsEther(int count, packet* packetStream){
     	int i;
-    	for(i=0;i<(count-1);i++){
+    	for(i=0;i<(count);i++){
     		int j;
-    		for(j=0;j<(count-1);j++){
-    			if(packetEther[j].etherSize > packetEther[j+1].etherSize){
-    				packet temp=packetEther[j];
-    				packetEther[j] = packetEther[j+1];
-    				packetEther[j+1] = temp;
+    		for(j=0;j<((count-i)-1);j++){
+    			if(packetStream[j].etherSize > packetStream[j+1].etherSize){
+    				packet temp=packetStream[j];
+    				packetStream[j] = packetStream[j+1];
+    				packetStream[j+1] = temp;
+    			}
+    		}
+    	}
+    }
+
+    void sortPacketsIp(int count, packet* packetStream){
+    	int i;
+    	for(i=0;i<(count);i++){
+    		int j;
+    		for(j=0;j<((count-i)-1);j++){
+    			if(packetStream[j].ipSize > packetStream[j+1].ipSize){
+    				packet temp=packetStream[j];
+    				packetStream[j] = packetStream[j+1];
+    				packetStream[j+1] = temp;
+    			}
+    		}
+    	}
+    }
+
+    void sortPacketsIpHdr(int count, packet* packetStream){
+    	int i;
+    	for(i=0;i<(count);i++){
+    		int j;
+    		for(j=0;j<((count-i)-1);j++){
+    			if(packetStream[j].ipHdrSize > packetStream[j+1].ipHdrSize){
+    				packet temp=packetStream[j];
+    				packetStream[j] = packetStream[j+1];
+    				packetStream[j+1] = temp;
+    			}
+    		}
+    	}
+    }
+
+    void sortPacketsTcp(int count, packet* packetStream){
+    	int i;
+    	for(i=0;i<(count);i++){
+    		int j;
+    		for(j=0;j<((count-i)-1);j++){
+    			if(packetStream[j].tcpSize > packetStream[j+1].tcpSize){
+    				packet temp=packetStream[j];
+    				packetStream[j] = packetStream[j+1];
+    				packetStream[j+1] = temp;
+    			}
+    		}
+    	}
+    }
+
+    void sortPacketsTcpHdr(int count, packet* packetStream){
+    	int i;
+    	for(i=0;i<(count);i++){
+    		int j;
+    		for(j=0;j<((count-i)-1);j++){
+    			if(packetStream[j].tcpHdrSize > packetStream[j+1].tcpHdrSize){
+    				packet temp=packetStream[j];
+    				packetStream[j] = packetStream[j+1];
+    				packetStream[j+1] = temp;
     			}
     		}
     	}
