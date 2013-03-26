@@ -23,6 +23,9 @@
 #include <math.h>
 #include <complex.h>
 #include <mysql/mysql.h>
+#include <openssl/md5.h>
+#include <unistd.h>
+#include <errno.h>
 
 #define FILENAME_MAX 256
 #define ETHERNET_HEADER_SIZE 14
@@ -198,8 +201,9 @@ void sortPacketsTcp(int count, packet* packetStream);
 void sortPacketsTcpHdr(int count, packet* packetStream);
 void verbosePacketOutput(int count, packet* packetStream);
 void mysqlConnector(MYSQL mysql);
+void calcmd5Sum(FILE* file_name, char* md5sum);
 
-
+extern int errno;
 /*********************************************
  * Main Function
  * @param argc Number of arguments passed in
@@ -212,6 +216,7 @@ int main (int argc, char **argv){
     pcap_t* handle;
     char errbuf[PCAP_ERRBUF_SIZE];
     struct stat fileStat;
+    char md5Sum[MD5_DIGEST_LENGTH*2];
 
     //Parsing arguments
     argparse arguments;
@@ -232,6 +237,11 @@ int main (int argc, char **argv){
             return 1;
         }
         else{
+        	//Calculating MD5 Sum
+            FILE* file_MD5;
+            file_MD5 = fopen(arguments.filename, "rb");
+            calcMd5Sum(file_MD5, md5Sum);
+            fclose(file_MD5);
             //Opening a pcap handle
             handle = pcap_open_offline(arguments.filename, errbuf);
         }
@@ -297,6 +307,8 @@ int main (int argc, char **argv){
         /*****************
          * Printing Output
          ****************/
+        printf("\n***MD5SUM***\n");
+        printf("%s\n", md5Sum);
         if(arguments.verbosemode == 1){
         	printf("\n***Sorted by Order Received***\n");
         	verbosePacketOutput(count, packetStream);
@@ -517,9 +529,9 @@ int main (int argc, char **argv){
     	minMax[1] = packetStream[start].ipSize;
     	int i;
     	for(i = start; i < finish; i++){
-    		if(packetStream[i].etherSize < minMax[0])
+    		if(packetStream[i].ipSize < minMax[0])
     			minMax[0] = packetStream[i].ipSize;
-    		if(packetStream[i].etherSize > minMax[1])
+    		if(packetStream[i].ipSize > minMax[1])
     			minMax[1] = packetStream[i].ipSize;
     	}
     }
@@ -541,9 +553,9 @@ int main (int argc, char **argv){
     	minMax[1] = packetStream[start].tcpSize;
     	int i;
     	for(i = start; i < finish; i++){
-    		if(packetStream[i].etherSize < minMax[0])
+    		if(packetStream[i].tcpSize < minMax[0])
     			minMax[0] = packetStream[i].tcpSize;
-    		if(packetStream[i].etherSize > minMax[1])
+    		if(packetStream[i].tcpSize > minMax[1])
     			minMax[1] = packetStream[i].tcpSize;
     	}
     }
@@ -920,8 +932,8 @@ int main (int argc, char **argv){
     	printf("\tIP Max: \t%i\n", stream.q1IpMax);
     	printf("\tIP Header Mean: %.2f\n", stream.q1IpHdrMean);
     	printf("\tIP Header STD:  %.2f\n", stream.q1IpHdrStd);
-    	printf("\tIP Min Header:  %.2f\n", stream.q1IpHdrMin);
-    	printf("\tIP Max Header:  %.2f\n", stream.q1IpHdrMax);
+    	printf("\tIP Min Header:  %i\n", stream.q1IpHdrMin);
+    	printf("\tIP Max Header:  %i\n", stream.q1IpHdrMax);
     	printf("\tTCP Mean: \t%.2f\n", stream.q1TcpMean);
     	printf("\tTCP STD: \t%.2f\n", stream.q1TcpStd);
     	printf("\tTCP Min: \t%i\n", stream.q1TcpMin);
@@ -1106,3 +1118,40 @@ int main (int argc, char **argv){
     	}
     }
 
+    void mysqlLoadStream(MYSQL mysql, stream stream){
+    	mysql_query(&mysql, "INSERT INTO streams(etherMean, etherStd, ipMean, etherMin, etherMax, ipHdrMean, ipHdrStd, ipStd, ipMin, ipMax, ipHdrMin, ipHdrMax, tcpMean, tcpHdrMean, tcpStd, tcpHdrStd, tcpMin, tcpMax, tcpHdrMin, tcpHdrMax, "
+    			"q1EtherMean, q2EtherMean, q3EtherMean, q4EtherMean, q1EtherStd, q2EtherStd, q3EtherStd, q4EtherStd, q1EtherMin, q1EtherMax, q2EtherMin, q2EtherMax, q3EtherMin, q3EtherMax, q4EtherMin, q4EtherMax, "
+    			"q1IpMean, q2IpMean, q3IpMean, q4IpMean, q1IpStd, q2IpStd, q3IpStd, q4IpStd, q1IpMin, q1IpMax, q2IpMin, q2IpMax, q3IpMin, q3IpMax, q4IpMin, q4IpMax, q1IpHdrMean, q2IpHdrMean, q3IpHdrMean, q4IpHdrMean, "
+    			"q1IpHdrStd, q2IpHdrStd, q3IpHdrStd, q4IpHdrStd, q1IpHdrMin, q1IpHdrMax, q2IpHdrMin, q2IpHdrMax, q3IpHdrMin, q3IpHdrMax, q4IpHdrMin, q4IpHdrMax, q1TcpMean, q2TcpMean, q3TcpMean, q4TcpMean, "
+    			"q1TcpStd, q2TcpStd, q3TcpStd, q4TcpStd, q1TcpMin, q1TcpMax, q2TcpMin, q2TcpMax, q3TcpMin, q3TcpMax, q4TcpMin, q4TcpMax, q1TcpHdrMean, q2TcpHdrMean, q3TcpHdrMean, q4TcpHdrMean, q1TcpHdrStd, q2TcpHdrStd, q3TcpHdrStd, q4TcpHdrStd, "
+    			"q1TcpHdrMin, q1TcpHdrMax, q2TcpHdrMin, q2TcpHdrMax, q3TcpHdrMin, q3TcpHdrMax, q4TcpHdrMin, q4TcpHdrMax)"
+    			" VALUES()");
+    }
+
+    void calcMd5Sum(FILE* file_name, char* md5sum){
+    	int n;
+    	MD5_CTX c;
+        ssize_t bytes;
+        unsigned char out[MD5_DIGEST_LENGTH];
+
+        MD5_Init(&c);
+        //bytes=read(file_name, buf, 512);
+        fseek (file_name, 0, SEEK_END);
+        long lSize = ftell(file_name);
+        rewind (file_name);
+        char buf[lSize];
+        bytes = fread((void *)buf, 1, lSize, file_name);
+        while(bytes > 0)
+        {
+                MD5_Update(&c, buf, bytes);
+                //bytes=read(file_name, buf, 512);
+                bytes = fread((void *)buf, 1, lSize, file_name);
+        }
+
+        MD5_Final(out, &c);
+        printf("\n");
+        //char md5sum[MD5_DIGEST_LENGTH*2];
+        char* md5ptr = md5sum;
+        for(n=0; n<MD5_DIGEST_LENGTH; n++)
+                        md5ptr += sprintf(md5ptr, "%02x", out[n]);
+    }

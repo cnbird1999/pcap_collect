@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lm -lmysqlclient -lpcap
+LIBS := -lm -lssl -lcrypto -lmysqlclient -lpcap
 
