@@ -1118,15 +1118,122 @@ int main (int argc, char **argv){
     	}
     }
 
-    void mysqlLoadStream(MYSQL mysql, stream stream){
-    	mysql_query(&mysql, "INSERT INTO streams(etherMean, etherStd, ipMean, etherMin, etherMax, ipHdrMean, ipHdrStd, ipStd, ipMin, ipMax, ipHdrMin, ipHdrMax, tcpMean, tcpHdrMean, tcpStd, tcpHdrStd, tcpMin, tcpMax, tcpHdrMin, tcpHdrMax, "
-    			"q1EtherMean, q2EtherMean, q3EtherMean, q4EtherMean, q1EtherStd, q2EtherStd, q3EtherStd, q4EtherStd, q1EtherMin, q1EtherMax, q2EtherMin, q2EtherMax, q3EtherMin, q3EtherMax, q4EtherMin, q4EtherMax, "
-    			"q1IpMean, q2IpMean, q3IpMean, q4IpMean, q1IpStd, q2IpStd, q3IpStd, q4IpStd, q1IpMin, q1IpMax, q2IpMin, q2IpMax, q3IpMin, q3IpMax, q4IpMin, q4IpMax, q1IpHdrMean, q2IpHdrMean, q3IpHdrMean, q4IpHdrMean, "
-    			"q1IpHdrStd, q2IpHdrStd, q3IpHdrStd, q4IpHdrStd, q1IpHdrMin, q1IpHdrMax, q2IpHdrMin, q2IpHdrMax, q3IpHdrMin, q3IpHdrMax, q4IpHdrMin, q4IpHdrMax, q1TcpMean, q2TcpMean, q3TcpMean, q4TcpMean, "
-    			"q1TcpStd, q2TcpStd, q3TcpStd, q4TcpStd, q1TcpMin, q1TcpMax, q2TcpMin, q2TcpMax, q3TcpMin, q3TcpMax, q4TcpMin, q4TcpMax, q1TcpHdrMean, q2TcpHdrMean, q3TcpHdrMean, q4TcpHdrMean, q1TcpHdrStd, q2TcpHdrStd, q3TcpHdrStd, q4TcpHdrStd, "
-    			"q1TcpHdrMin, q1TcpHdrMax, q2TcpHdrMin, q2TcpHdrMax, q3TcpHdrMin, q3TcpHdrMax, q4TcpHdrMin, q4TcpHdrMax)"
-    			" VALUES()");
-    }
+my_ulonglong saveStreamInfo( MYSQL mysql, stream mainStream, stream etherStream, stream ipStream, stream ipHdrStream, stream tcpStream, stream tcpHdrStream )
+{
+	char[] sql = char[3000];
+	char[] etherSql = char[3000];
+	char[] ipSql = char[3000];
+	char[] ipHdrSql = char[3000];
+	char[] tcpSql = char[3000];
+	char[] tcpHdrSql = char[3000];
+
+	//create insert string
+	sprintf( sql, "INSERT INTO pcap VALUES( '', '%s', %u, NULL, NULL, NULL, NULL, NULL, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u )", 
+	md5,
+	isSsh,
+	mainStream.etherMean,
+	mainStream.q1EtherMean,
+	mainStream.q2EtherMean,
+	mainStream.q3EtherMean,
+	mainStream.q4EtherMean,
+	mainStream.etherStd,
+	mainStream.q1EtherStd,
+	mainStream.q2EtherStd,
+	mainStream.q3EtherStd,
+	mainStream.q4EtherStd,
+	mainStream.etherMin,
+	mainStream.q1EtherMin,
+	mainStream.q2EtherMin,
+	mainStream.q3EtherMin,
+	mainStream.q4EtherMin,
+	mainStream.etherMax,
+	mainStream.q1EtherMax,
+	mainStream.q2EtherMax,
+	mainStream.q3EtherMax,
+	mainStream.q4EtherMax,
+	mainStream.ipMean,
+	mainStream.q1IpMean,
+	mainStream.q2IpMean,
+	mainStream.q3IpMean,
+	mainStream.q4IpMean,
+	mainStream.ipHdrMean,
+	mainStream.q1IpHdrMean,
+	mainStream.q2IpHdrMean,
+	mainStream.q3IpHdrMean,
+	mainStream.q4IpHdrMean,
+	mainStream.ipStd,
+	mainStream.q1IpStd,
+	mainStream.q2IpStd,
+	mainStream.q3IpStd,
+	mainStream.q4IpStd,
+	mainStream.ipHdrStd,
+	mainStream.q1IpHdrStd,
+	mainStream.q2IpHdrStd,
+	mainStream.q3IpHdrStd,
+	mainStream.q4IpHdrStd,
+	mainStream.ipMin,
+	mainStream.q1IpMin,
+	mainStream.q2IpMin,
+	mainStream.q3IpMin,
+	mainStream.q4IpMin,
+	mainStream.ipHdrMin,
+	mainStream.q1IpHdrMin,
+	mainStream.q2IpHdrMin,
+	mainStream.q3IpHdrMin,
+	mainStream.q4IpHdrMin,
+	mainStream.ipMax,
+	mainStream.q1IpMax,
+	mainStream.q2IpMax,
+	mainStream.q3IpMax,
+	mainStream.q4IpMax,
+	mainStream.ipHdrMax,
+	mainStream.q1IpHdrMax,
+	mainStream.q2IpHdrMax,
+	mainStream.q3IpHdrMax,
+	mainStream.q4IpHdrMax,
+	mainStream.tcpMean,
+	mainStream.q1TcpMean,
+	mainStream.q2TcpMean,
+	mainStream.q3TcpMean,
+	mainStream.q4TcpMean,
+	mainStream.tcpHdrMean,
+	mainStream.q1TcpHdrMean,
+	mainStream.q2TcpHdrMean,
+	mainStream.q3TcpHdrMean,
+	mainStream.q4TcpHdrMean,
+	mainStream.tcpStd,
+	mainStream.q1TcpStd,
+	mainStream.q2TcpStd,
+	mainStream.q3TcpStd,
+	mainStream.q4TcpStd,
+	mainStream.tcpHdrStd,
+	mainStream.q1TcpHdrStd,
+	mainStream.q2TcpHdrStd,
+	mainStream.q3TcpHdrStd,
+	mainStream.q4TcpHdrStd,
+	mainStream.tcpMin,
+	mainStream.q1TcpMin,
+	mainStream.q2TcpMin,
+	mainStream.q3TcpMin,
+	mainStream.q4TcpMin,
+	mainStream.tcpHdrMin,
+	mainStream.q1TcpHdrMin,
+	mainStream.q2TcpHdrMin,
+	mainStream.q3TcpHdrMin,
+	mainStream.q4TcpHdrMin,
+	mainStream.tcpMax,
+	mainStream.q1TcpMax,
+	mainStream.q2TcpMax,
+	mainStream.q3TcpMax,
+	mainStream.q4TcpMax,
+	mainStream.tcpHdrMax,
+	mainStream.q1TcpHdrMax,
+	mainStream.q2TcpHdrMax,
+	mainStream.q3TcpHdrMax,
+	mainStream.q4TcpHdrMax );
+	
+	return mysql_insert_id( mysql );
+}
 
     void calcMd5Sum(FILE* file_name, char* md5sum){
     	int n;
