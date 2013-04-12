@@ -202,6 +202,7 @@ void sortPacketsTcpHdr(int count, packet* packetStream);
 void verbosePacketOutput(int count, packet* packetStream);
 void mysqlConnector(MYSQL mysql);
 void calcmd5Sum(FILE* file_name, char* md5sum);
+my_ulonglong saveStreamInfo( MYSQL mysql, char* md5, stream* mainStream, stream *etherStream, stream *ipStream, stream *ipHdrStream, stream *tcpStream, stream *tcpHdrStream );
 
 extern int errno;
 /*********************************************
@@ -300,6 +301,7 @@ int main (int argc, char **argv){
          ***************/
         MYSQL mysql;
         mysqlConnector(mysql);
+        int mysqlid = saveStreamInfo(mysql, &md5Sum, &stream, &streamEther, &streamIp, &streamIpHdr, &streamTcp, &streamTcpHdr);
 
 
 
@@ -335,6 +337,7 @@ int main (int argc, char **argv){
         displayOutput(count, quartile, packetIp, streamTcp);
         printf("\n****Summary TCP Header Size****\n");
         displayOutput(count, quartile, packetIp, streamTcpHdr);
+        printf("\nMysql column ID: %u\n", mysqlid);
 
 
         return 0;
@@ -1118,121 +1121,129 @@ int main (int argc, char **argv){
     	}
     }
 
-my_ulonglong saveStreamInfo( MYSQL mysql, stream mainStream, stream etherStream, stream ipStream, stream ipHdrStream, stream tcpStream, stream tcpHdrStream )
+my_ulonglong saveStreamInfo( MYSQL mysql, char *md5, stream* mainStream, stream *etherStream, stream *ipStream, stream *ipHdrStream, stream *tcpStream, stream *tcpHdrStream )
 {
-	char[] sql = char[3000];
-	char[] etherSql = char[3000];
-	char[] ipSql = char[3000];
-	char[] ipHdrSql = char[3000];
-	char[] tcpSql = char[3000];
-	char[] tcpHdrSql = char[3000];
+	char sql[3000];
+	char etherSql[3000];
+	char ipSql[3000];
+	char ipHdrSql[3000];
+	char tcpSql[3000];
+	char tcpHdrSql[3000];
+	int isSsh = 1;
 
 	//create insert string
-	sprintf( sql, "INSERT INTO pcap VALUES( '', '%s', %u, NULL, NULL, NULL, NULL, NULL, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u )", 
+	sprintf( sql, "INSERT INTO pcap.stream VALUES( NULL, '%s', 1, NULL, NULL, NULL, NULL, NULL, %12.2f, %12.2f, "
+			"%12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f,%u,%u,%u,%u,%u,%u,%u,%u,%u,"
+			"%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,"
+			"%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%u,%u,%u,"
+			"%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,"
+			"%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,"
+			"%12.2f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u )",
 	md5,
-	isSsh,
-	mainStream.etherMean,
-	mainStream.q1EtherMean,
-	mainStream.q2EtherMean,
-	mainStream.q3EtherMean,
-	mainStream.q4EtherMean,
-	mainStream.etherStd,
-	mainStream.q1EtherStd,
-	mainStream.q2EtherStd,
-	mainStream.q3EtherStd,
-	mainStream.q4EtherStd,
-	mainStream.etherMin,
-	mainStream.q1EtherMin,
-	mainStream.q2EtherMin,
-	mainStream.q3EtherMin,
-	mainStream.q4EtherMin,
-	mainStream.etherMax,
-	mainStream.q1EtherMax,
-	mainStream.q2EtherMax,
-	mainStream.q3EtherMax,
-	mainStream.q4EtherMax,
-	mainStream.ipMean,
-	mainStream.q1IpMean,
-	mainStream.q2IpMean,
-	mainStream.q3IpMean,
-	mainStream.q4IpMean,
-	mainStream.ipHdrMean,
-	mainStream.q1IpHdrMean,
-	mainStream.q2IpHdrMean,
-	mainStream.q3IpHdrMean,
-	mainStream.q4IpHdrMean,
-	mainStream.ipStd,
-	mainStream.q1IpStd,
-	mainStream.q2IpStd,
-	mainStream.q3IpStd,
-	mainStream.q4IpStd,
-	mainStream.ipHdrStd,
-	mainStream.q1IpHdrStd,
-	mainStream.q2IpHdrStd,
-	mainStream.q3IpHdrStd,
-	mainStream.q4IpHdrStd,
-	mainStream.ipMin,
-	mainStream.q1IpMin,
-	mainStream.q2IpMin,
-	mainStream.q3IpMin,
-	mainStream.q4IpMin,
-	mainStream.ipHdrMin,
-	mainStream.q1IpHdrMin,
-	mainStream.q2IpHdrMin,
-	mainStream.q3IpHdrMin,
-	mainStream.q4IpHdrMin,
-	mainStream.ipMax,
-	mainStream.q1IpMax,
-	mainStream.q2IpMax,
-	mainStream.q3IpMax,
-	mainStream.q4IpMax,
-	mainStream.ipHdrMax,
-	mainStream.q1IpHdrMax,
-	mainStream.q2IpHdrMax,
-	mainStream.q3IpHdrMax,
-	mainStream.q4IpHdrMax,
-	mainStream.tcpMean,
-	mainStream.q1TcpMean,
-	mainStream.q2TcpMean,
-	mainStream.q3TcpMean,
-	mainStream.q4TcpMean,
-	mainStream.tcpHdrMean,
-	mainStream.q1TcpHdrMean,
-	mainStream.q2TcpHdrMean,
-	mainStream.q3TcpHdrMean,
-	mainStream.q4TcpHdrMean,
-	mainStream.tcpStd,
-	mainStream.q1TcpStd,
-	mainStream.q2TcpStd,
-	mainStream.q3TcpStd,
-	mainStream.q4TcpStd,
-	mainStream.tcpHdrStd,
-	mainStream.q1TcpHdrStd,
-	mainStream.q2TcpHdrStd,
-	mainStream.q3TcpHdrStd,
-	mainStream.q4TcpHdrStd,
-	mainStream.tcpMin,
-	mainStream.q1TcpMin,
-	mainStream.q2TcpMin,
-	mainStream.q3TcpMin,
-	mainStream.q4TcpMin,
-	mainStream.tcpHdrMin,
-	mainStream.q1TcpHdrMin,
-	mainStream.q2TcpHdrMin,
-	mainStream.q3TcpHdrMin,
-	mainStream.q4TcpHdrMin,
-	mainStream.tcpMax,
-	mainStream.q1TcpMax,
-	mainStream.q2TcpMax,
-	mainStream.q3TcpMax,
-	mainStream.q4TcpMax,
-	mainStream.tcpHdrMax,
-	mainStream.q1TcpHdrMax,
-	mainStream.q2TcpHdrMax,
-	mainStream.q3TcpHdrMax,
-	mainStream.q4TcpHdrMax );
-	
-	return mysql_insert_id( mysql );
+	mainStream->etherMean,
+	mainStream->q1EtherMean,
+	mainStream->q2EtherMean,
+	mainStream->q3EtherMean,
+	mainStream->q4EtherMean,
+	mainStream->etherStd,
+	mainStream->q1EtherStd,
+	mainStream->q2EtherStd,
+	mainStream->q3EtherStd,
+	mainStream->q4EtherStd,
+	mainStream->etherMin,
+	mainStream->q1EtherMin,
+	mainStream->q2EtherMin,
+	mainStream->q3EtherMin,
+	mainStream->q4EtherMin,
+	mainStream->etherMax,
+	mainStream->q1EtherMax,
+	mainStream->q2EtherMax,
+	mainStream->q3EtherMax,
+	mainStream->q4EtherMax,
+	mainStream->ipMean,
+	mainStream->q1IpMean,
+	mainStream->q2IpMean,
+	mainStream->q3IpMean,
+	mainStream->q4IpMean,
+	mainStream->ipHdrMean,
+	mainStream->q1IpHdrMean,
+	mainStream->q2IpHdrMean,
+	mainStream->q3IpHdrMean,
+	mainStream->q4IpHdrMean,
+	mainStream->ipStd,
+	mainStream->q1IpStd,
+	mainStream->q2IpStd,
+	mainStream->q3IpStd,
+	mainStream->q4IpStd,
+	mainStream->ipHdrStd,
+	mainStream->q1IpHdrStd,
+	mainStream->q2IpHdrStd,
+	mainStream->q3IpHdrStd,
+	mainStream->q4IpHdrStd,
+	mainStream->ipMin,
+	mainStream->q1IpMin,
+	mainStream->q2IpMin,
+	mainStream->q3IpMin,
+	mainStream->q4IpMin,
+	mainStream->ipHdrMin,
+	mainStream->q1IpHdrMin,
+	mainStream->q2IpHdrMin,
+	mainStream->q3IpHdrMin,
+	mainStream->q4IpHdrMin,
+	mainStream->ipMax,
+	mainStream->q1IpMax,
+	mainStream->q2IpMax,
+	mainStream->q3IpMax,
+	mainStream->q4IpMax,
+	mainStream->ipHdrMax,
+	mainStream->q1IpHdrMax,
+	mainStream->q2IpHdrMax,
+	mainStream->q3IpHdrMax,
+	mainStream->q4IpHdrMax,
+	mainStream->tcpMean,
+	mainStream->q1TcpMean,
+	mainStream->q2TcpMean,
+	mainStream->q3TcpMean,
+	mainStream->q4TcpMean,
+	mainStream->tcpHdrMean,
+	mainStream->q1TcpHdrMean,
+	mainStream->q2TcpHdrMean,
+	mainStream->q3TcpHdrMean,
+	mainStream->q4TcpHdrMean,
+	mainStream->tcpStd,
+	mainStream->q1TcpStd,
+	mainStream->q2TcpStd,
+	mainStream->q3TcpStd,
+	mainStream->q4TcpStd,
+	mainStream->tcpHdrStd,
+	mainStream->q1TcpHdrStd,
+	mainStream->q2TcpHdrStd,
+	mainStream->q3TcpHdrStd,
+	mainStream->q4TcpHdrStd,
+	mainStream->tcpMin,
+	mainStream->q1TcpMin,
+	mainStream->q2TcpMin,
+	mainStream->q3TcpMin,
+	mainStream->q4TcpMin,
+	mainStream->tcpHdrMin,
+	mainStream->q1TcpHdrMin,
+	mainStream->q2TcpHdrMin,
+	mainStream->q3TcpHdrMin,
+	mainStream->q4TcpHdrMin,
+	mainStream->tcpMax,
+	mainStream->q1TcpMax,
+	mainStream->q2TcpMax,
+	mainStream->q3TcpMax,
+	mainStream->q4TcpMax,
+	mainStream->tcpHdrMax,
+	mainStream->q1TcpHdrMax,
+	mainStream->q2TcpHdrMax,
+	mainStream->q3TcpHdrMax,
+	mainStream->q4TcpHdrMax );
+	printf ("\n***Mysql Query String: %s\n***\n", sql);
+	mysql_query(&mysql, sql);
+
+	return mysql_insert_id( &mysql );
 }
 
     void calcMd5Sum(FILE* file_name, char* md5sum){
