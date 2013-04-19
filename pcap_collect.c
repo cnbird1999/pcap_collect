@@ -200,9 +200,9 @@ void sortPacketsIpHdr(int count, packet* packetStream);
 void sortPacketsTcp(int count, packet* packetStream);
 void sortPacketsTcpHdr(int count, packet* packetStream);
 void verbosePacketOutput(int count, packet* packetStream);
-void mysqlConnector(MYSQL mysql);
+MYSQL* mysqlConnector(MYSQL *mysql);
 void calcmd5Sum(FILE* file_name, char* md5sum);
-my_ulonglong saveStreamInfo( MYSQL mysql, char* md5, stream* mainStream, stream *etherStream, stream *ipStream, stream *ipHdrStream, stream *tcpStream, stream *tcpHdrStream );
+my_ulonglong saveStreamInfo( MYSQL *mysql, char* md5, stream* mainStream, stream *etherStream, stream *ipStream, stream *ipHdrStream, stream *tcpStream, stream *tcpHdrStream );
 
 extern int errno;
 /*********************************************
@@ -299,8 +299,8 @@ int main (int argc, char **argv){
         /***************
          * Mysql Section
          ***************/
-        MYSQL mysql;
-        mysqlConnector(mysql);
+        MYSQL *mysql;
+        mysql = mysqlConnector(mysql);
         int mysqlid = saveStreamInfo(mysql, &md5Sum, &stream, &streamEther, &streamIp, &streamIpHdr, &streamTcp, &streamTcpHdr);
 
 
@@ -1111,17 +1111,18 @@ int main (int argc, char **argv){
      * Mysql functions
      *******************/
 
-    void mysqlConnector(MYSQL mysql){
+    MYSQL* mysqlConnector(MYSQL *mysql){
 
-    	mysql_init(&mysql);
-    	if (!mysql_real_connect(&mysql,"localhost","pcap","P@ssw0rd","pcap",0,NULL,0))
+    	mysql = mysql_init(NULL);
+    	if (!mysql_real_connect(mysql,"localhost","pcap","P@ssw0rd","pcap",0,NULL,0))
     	{
     	    fprintf(stderr, "Failed to connect to database: Error: %s\n",
-    	          mysql_error(&mysql));
+    	          mysql_error(mysql));
     	}
+    	return mysql;
     }
 
-my_ulonglong saveStreamInfo( MYSQL mysql, char *md5, stream* mainStream, stream *etherStream, stream *ipStream, stream *ipHdrStream, stream *tcpStream, stream *tcpHdrStream )
+my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream *etherStream, stream *ipStream, stream *ipHdrStream, stream *tcpStream, stream *tcpHdrStream )
 {
 	char sql[3000];
 	char etherSql[3000];
@@ -1132,13 +1133,15 @@ my_ulonglong saveStreamInfo( MYSQL mysql, char *md5, stream* mainStream, stream 
 	int isSsh = 1;
 
 	//create insert string
-	sprintf( sql, "INSERT INTO pcap.stream VALUES( NULL, '%s', 1, NULL, NULL, NULL, NULL, NULL, %12.2f, %12.2f, "
-			"%12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f,%u,%u,%u,%u,%u,%u,%u,%u,%u,"
-			"%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,"
-			"%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%u,%u,%u,"
-			"%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,"
-			"%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,%12.2f,"
-			"%12.2f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u )",
+	sprintf(sql, "INSERT INTO stream VALUES(NULL, '%s', 1, NULL, NULL, NULL, NULL, NULL,"
+	//Ethernet Values
+	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,"
+	//IP Values
+	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,"
+	"%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,"
+	//TCP Values
+	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,"
+	"%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i)",
 	md5,
 	mainStream->etherMean,
 	mainStream->q1EtherMean,
@@ -1240,10 +1243,9 @@ my_ulonglong saveStreamInfo( MYSQL mysql, char *md5, stream* mainStream, stream 
 	mainStream->q2TcpHdrMax,
 	mainStream->q3TcpHdrMax,
 	mainStream->q4TcpHdrMax );
-	printf ("\n***Mysql Query String: %s\n***\n", sql);
-	mysql_query(&mysql, sql);
+	mysql_query(mysql, sql);
 
-	return mysql_insert_id( &mysql );
+	return mysql_insert_id( mysql );
 }
 
     void calcMd5Sum(FILE* file_name, char* md5sum){
