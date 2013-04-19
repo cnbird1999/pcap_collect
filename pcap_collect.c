@@ -1250,6 +1250,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	etherStream->q4TcpHdrMax );
 	mysql_query(mysql, etherSql);
 	etherId = mysql_insert_id( mysql );
+	printf( "Ethernet id: %u", etherId );
 
 	//insert stream sorted by ip
 	sprintf(ipSql, "INSERT INTO stream VALUES(NULL, '%s', 1, NULL, NULL, NULL, NULL, NULL,"
@@ -1364,6 +1365,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	ipStream->q4TcpHdrMax );
 	mysql_query(mysql, ipSql);
 	ipId = mysql_insert_id( mysql );
+	printf( "IP id: %u", ipId );
 	
 	//insert stream sorted by ipHdr
 	sprintf(ipSql, "INSERT INTO stream VALUES(NULL, '%s', 1, NULL, NULL, NULL, NULL, NULL,"
@@ -1478,6 +1480,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	ipHdrStream->q4TcpHdrMax );
 	mysql_query(mysql, ipHdrSql);
 	ipHdrId = mysql_insert_id( mysql );
+	printf( "IP Hdr id: %u", ipHdrId );
 
 	//insert stream sorted by tcp
 	sprintf(ipSql, "INSERT INTO stream VALUES(NULL, '%s', 1, NULL, NULL, NULL, NULL, NULL,"
@@ -1592,6 +1595,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	tcpStream->q4TcpHdrMax );
 	mysql_query(mysql, tcpSql);
 	tcpId = mysql_insert_id( mysql );
+	printf( "TCP id: %u", tcpId );
 	
 	//insert stream sorted by tcpHdr
 	sprintf(ipSql, "INSERT INTO stream VALUES(NULL, '%s', 1, NULL, NULL, NULL, NULL, NULL,"
@@ -1706,6 +1710,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	tcpHdrStream->q4TcpHdrMax );
 	mysql_query(mysql, tcpHdrSql);
 	tcpHdrId = mysql_insert_id( mysql );
+	printf( "TCP Hdr id: %u", tcpHdrId );
 
 	//create insert string
 	sprintf(sql, "INSERT INTO stream VALUES(NULL, '%s', 1, %u, %u, %u, %u, %u,"
