@@ -230,7 +230,7 @@ int main (int argc, char **argv){
         printf("Opening file: %s\n\n", arguments.filename);
     }
     else{
-        printf("Usage: pcap_collect -v -f [filename]\n");
+        printf("Usage: pcap_collect (-s) -v -f [filename]\n");
         return 1;
     }
     //Starting to open pcap file
@@ -1120,7 +1120,7 @@ int main (int argc, char **argv){
     MYSQL* mysqlConnector(MYSQL *mysql){
 
     	mysql = mysql_init(NULL);
-    	if (!mysql_real_connect(mysql,"localhost","pcap","P@ssw0rd","pcap",0,NULL,0))
+    	if (!mysql_real_connect(mysql,"192.168.1.139","pcap","P@ssw0rd","pcap",0,NULL,0))
     	{
     	    fprintf(stderr, "Failed to connect to database: Error: %s\n",
     	          mysql_error(mysql));
@@ -1136,15 +1136,20 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	char ipHdrSql[3000];
 	char tcpSql[3000];
 	char tcpHdrSql[3000];
-	int isSsh = 1;
+	char classificationSql[100];
+	char md5Sql[100];
+	char streamLinkSql[200];
+
+	int isSsh = sshSwitch;
 	unsigned int etherId = 0;
 	unsigned int ipId = 0;
 	unsigned int ipHdrId = 0;
 	unsigned int tcpId = 0;
 	unsigned int tcpHdrId = 0;
+	unsigned int streamId = 0;
 
 	//insert stream sorted by ethernet
-	sprintf(etherSql, "INSERT INTO stream VALUES(NULL, '%s', %i, NULL, NULL, NULL, NULL, NULL,"
+	sprintf(etherSql, "INSERT INTO stream VALUES(NULL,"
 	//Ethernet Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,"
 	//IP Values
@@ -1153,8 +1158,6 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	//TCP Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,"
 	"%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i)",
-	md5,
-	sshSwitch,
 	etherStream->etherMean,
 	etherStream->q1EtherMean,
 	etherStream->q2EtherMean,
@@ -1263,7 +1266,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	//printf("%s\n", etherSql);
 
 	//insert stream sorted by ip
-	sprintf(ipSql, "INSERT INTO stream VALUES(NULL, '%s', %i, NULL, NULL, NULL, NULL, NULL,"
+	sprintf(ipSql, "INSERT INTO stream VALUES(NULL, "
 	//Ethernet Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,"
 	//IP Values
@@ -1272,8 +1275,6 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	//TCP Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,"
 	"%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i)",
-	md5,
-	sshSwitch,
 	ipStream->etherMean,
 	ipStream->q1EtherMean,
 	ipStream->q2EtherMean,
@@ -1383,7 +1384,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 
 	
 	//insert stream sorted by ipHdr
-	sprintf(ipHdrSql, "INSERT INTO stream VALUES(NULL, '%s', %i, NULL, NULL, NULL, NULL, NULL,"
+	sprintf(ipHdrSql, "INSERT INTO stream VALUES(NULL, "
 	//Ethernet Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,"
 	//IP Values
@@ -1392,8 +1393,6 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	//TCP Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,"
 	"%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i)",
-	md5,
-	sshSwitch,
 	ipHdrStream->etherMean,
 	ipHdrStream->q1EtherMean,
 	ipHdrStream->q2EtherMean,
@@ -1502,7 +1501,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	//printf("%s\n", ipHdrSql);
 
 	//insert stream sorted by tcp
-	sprintf(tcpSql, "INSERT INTO stream VALUES(NULL, '%s', %i, NULL, NULL, NULL, NULL, NULL,"
+	sprintf(tcpSql, "INSERT INTO stream VALUES(NULL, "
 	//Ethernet Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,"
 	//IP Values
@@ -1511,8 +1510,6 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	//TCP Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,"
 	"%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i)",
-	md5,
-	sshSwitch,
 	tcpStream->etherMean,
 	tcpStream->q1EtherMean,
 	tcpStream->q2EtherMean,
@@ -1621,7 +1618,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	//printf("%s\n", tcpSql);
 	
 	//insert stream sorted by tcpHdr
-	sprintf(tcpHdrSql, "INSERT INTO stream VALUES(NULL, '%s', %i, NULL, NULL, NULL, NULL, NULL,"
+	sprintf(tcpHdrSql, "INSERT INTO stream VALUES(NULL, "
 	//Ethernet Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,"
 	//IP Values
@@ -1630,8 +1627,6 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	//TCP Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,"
 	"%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i)",
-	md5,
-	sshSwitch,
 	tcpHdrStream->etherMean,
 	tcpHdrStream->q1EtherMean,
 	tcpHdrStream->q2EtherMean,
@@ -1740,7 +1735,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	//printf("%s\n", tcpHdrSql);
 
 	//create insert string
-	sprintf(sql, "INSERT INTO stream VALUES(NULL, '%s', %i, %u, %u, %u, %u, %u,"
+	sprintf(sql, "INSERT INTO stream VALUES(NULL, "
 	//Ethernet Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,"
 	//IP Values
@@ -1749,13 +1744,6 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	//TCP Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,"
 	"%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i)",
-	md5,
-	sshSwitch,
-	etherId,
-	ipId,
-	ipHdrId,
-	tcpId,
-	tcpHdrId,
 	mainStream->etherMean,
 	mainStream->q1EtherMean,
 	mainStream->q2EtherMean,
@@ -1861,7 +1849,25 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	}
 	//printf("%s\n", sql);
 
-	return mysql_insert_id( mysql );
+	streamId = mysql_insert_id( mysql );
+
+	//isSsh Table
+	sprintf(classificationSql, "INSERT INTO classification VALUES( %u, %i)", streamId, isSsh);
+	if(mysql_query(mysql, classificationSql)){
+		printf("Error %u: %s\n", mysql_errno(mysql), mysql_error(mysql));
+	}
+	//md5 Table
+	sprintf(md5Sql, "INSERT INTO md5 VALUES(%u, '%s')", streamId, md5);
+	if(mysql_query(mysql, md5Sql)){
+		printf("Error %u: %s\n", mysql_errno(mysql), mysql_error(mysql));
+	}
+	//Stream Link table
+	sprintf(streamLinkSql, "INSERT INTO streamLink VALUES(%u, %u, %u, %u, %u, %u)", streamId, etherId, ipId, ipHdrId, tcpId, tcpHdrId);
+	if(mysql_query(mysql, streamLinkSql)){
+		printf("Error %u: %s\n", mysql_errno(mysql), mysql_error(mysql));
+	}
+	//return mysql_insert_id( mysql );
+	return streamId;
 }
 
     void calcMd5Sum(FILE* file_name, char* md5sum){
