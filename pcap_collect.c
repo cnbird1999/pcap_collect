@@ -1149,7 +1149,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	unsigned int streamId = 0;
 
 	//insert stream sorted by ethernet
-	sprintf(etherSql, "INSERT INTO stream VALUES(NULL,"
+	sprintf(etherSql, "INSERT INTO ethernet VALUES(NULL,"
 	//Ethernet Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,"
 	//IP Values
@@ -1266,7 +1266,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	//printf("%s\n", etherSql);
 
 	//insert stream sorted by ip
-	sprintf(ipSql, "INSERT INTO stream VALUES(NULL, "
+	sprintf(ipSql, "INSERT INTO ip VALUES(NULL, "
 	//Ethernet Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,"
 	//IP Values
@@ -1384,7 +1384,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 
 	
 	//insert stream sorted by ipHdr
-	sprintf(ipHdrSql, "INSERT INTO stream VALUES(NULL, "
+	sprintf(ipHdrSql, "INSERT INTO ipHdr VALUES(NULL, "
 	//Ethernet Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,"
 	//IP Values
@@ -1501,7 +1501,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	//printf("%s\n", ipHdrSql);
 
 	//insert stream sorted by tcp
-	sprintf(tcpSql, "INSERT INTO stream VALUES(NULL, "
+	sprintf(tcpSql, "INSERT INTO tcp VALUES(NULL, "
 	//Ethernet Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,"
 	//IP Values
@@ -1618,7 +1618,7 @@ my_ulonglong saveStreamInfo( MYSQL *mysql, char *md5, stream* mainStream, stream
 	//printf("%s\n", tcpSql);
 	
 	//insert stream sorted by tcpHdr
-	sprintf(tcpHdrSql, "INSERT INTO stream VALUES(NULL, "
+	sprintf(tcpHdrSql, "INSERT INTO tcpHdr VALUES(NULL, "
 	//Ethernet Values
 	"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,"
 	//IP Values
